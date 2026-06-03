@@ -145,12 +145,7 @@ export default function App() {
     });
   };
 
-  const codeBuildText = `git clone https://github.com/Great-Grace/DDalGGak.git
-cd DDalGGak
-Scripts/package_app.sh
-rm -rf /Applications/DDalGGak.app
-cp -R dist/DDalGGak.app /Applications/
-open /Applications/DDalGGak.app`;
+
 
   const codeQuarantineText = `xattr -cr /Applications/DDalGGak.app`;
 
@@ -182,8 +177,8 @@ open /Applications/DDalGGak.app`;
             <h1>타이핑을 더 즐겁게,<br /><span className="gradient-text">딸깍 (DDalGGak)</span></h1>
             <p className="hero-subtitle">키보드를 누를 때마다 찰진 기계식 타건음을 실시간으로 들려주는 macOS 메뉴 바 앱입니다. 100% 로컬 오디오 렌더러로 반응 속도가 손가락 끝과 일치합니다.</p>
             <div className="hero-actions">
-              <a href="#install" className="btn primary-btn">
-                <span>지금 무료 설치</span>
+              <a href="/DDalGGak.zip" download className="btn primary-btn">
+                <span>지금 무료 다운로드 (macOS)</span>
               </a>
               <a href="#demo" className="btn secondary-btn">웹 데모 체험하기</a>
             </div>
@@ -326,23 +321,19 @@ open /Applications/DDalGGak.app`;
         <section id="install" className="install-section">
           <div className="section-header">
             <h2>쉽고 빠른 설치 가이드</h2>
-            <p>Xcode Command Line Tools 또는 빌드 셸을 사용해 맥북에 설치하는 법을 안내합니다.</p>
+            <p>빌드된 앱 패키지를 다운로드하여 빠르고 간편하게 설치하는 방법을 안내합니다.</p>
           </div>
           
           <div className="install-container">
             <div className="step-card">
               <div className="step-num">1</div>
               <div className="step-content">
-                <h3>소스 빌드 및 배포</h3>
-                <p>터미널을 열고 아래 명령어를 순서대로 실행해 프로젝트를 빌드하고 응용 프로그램 폴더로 이동시킵니다.</p>
-                <div className="code-box">
-                  <pre><code>{codeBuildText}</code></pre>
-                  <button 
-                    className={`copy-btn ${copyStatus['build'] ? 'copied' : ''}`} 
-                    onClick={() => handleCopyToClipboard(codeBuildText, 'build')}
-                  >
-                    {copyStatus['build'] ? '복사 완료!' : '복사'}
-                  </button>
+                <h3>앱 패키지 다운로드 및 복사</h3>
+                <p>아래 다운로드 버튼을 눌러 빌드된 앱 패키지(<code>DDalGGak.zip</code>)를 다운로드하고 압축을 푼 뒤, <code>DDalGGak.app</code> 파일을 <strong>응용 프로그램 (Applications)</strong> 폴더로 복사합니다.</p>
+                <div style={{ marginTop: '12px' }}>
+                  <a href="/DDalGGak.zip" download className="btn primary-btn" style={{ fontSize: '13px', padding: '10px 20px' }}>
+                    <span>DDalGGak.zip 다운로드 📥</span>
+                  </a>
                 </div>
               </div>
             </div>
