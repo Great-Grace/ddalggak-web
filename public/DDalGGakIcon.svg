@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="DDalGGak keycap side logo">
+  <rect width="1024" height="1024" rx="224" fill="#050505"/>
+  <path d="M236 600h552l-70 160H306z" fill="#B9C0C8"/>
+  <path d="M294 318h436c28 0 52 19 58 46l54 236H182l54-236c6-27 30-46 58-46z" fill="#F5F7FA"/>
+  <path d="M294 318h436c28 0 52 19 58 46l18 78H218l18-78c6-27 30-46 58-46z" fill="#FFFFFF"/>
+  <path d="M306 760h412l-25 58c-8 19-27 31-48 31H379c-21 0-40-12-48-31z" fill="#6F7781"/>
+  <path d="M410 842h204v58H410z" fill="#2F343A"/>
+  <path d="M236 600h552" stroke="#252A30" stroke-width="28" stroke-linecap="round"/>
+  <path d="M264 684h496" stroke="#8D96A1" stroke-width="20" stroke-linecap="round" opacity=".55"/>
+</svg>
