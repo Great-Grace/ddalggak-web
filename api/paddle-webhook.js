@@ -1,53 +1,102 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+// Disable Vercel's default body parser so we can access the exact raw body for signature verification
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Generate license key in format: DDGG-XXXX-XXXX-XXXX
+// Allowed product IDs (prevent fake product injection)
+const ALLOWED_PRODUCT_IDS = [
+  'pro_01ktn7wrb9r278s64e2r2vnqac',
+];
+
+// Generate license key in format: DDGG-XXXX-XXXX-XXXX (cryptographically secure)
 function generateLicenseKey() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (0,O,1,I)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const segments = [];
-  
+
   for (let i = 0; i < 3; i++) {
     let segment = '';
     for (let j = 0; j < 4; j++) {
-      segment += chars.charAt(Math.floor(Math.random() * chars.length));
+      segment += chars.charAt(crypto.randomInt(chars.length));
     }
     segments.push(segment);
   }
-  
+
   return `DDGG-${segments.join('-')}`;
 }
 
-// Verify Paddle webhook signature
-function verifyPaddleSignature(body, signature, secret) {
-  if (!secret) return true; // Skip verification if no secret set
-  
+// Validate email format
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Verify Paddle webhook signature (MANDATORY)
+function verifyPaddleSignature(rawBody, signature, secret) {
+  if (!secret) {
+    console.error('PADDLE_WEBHOOK_SECRET is not configured');
+    return false;
+  }
+
+  if (!signature) {
+    console.error('Missing paddle-signature header');
+    return false;
+  }
+
   const pairs = signature.split(';');
   const signatureMap = {};
-  
+
   pairs.forEach(pair => {
     const [key, value] = pair.split('=');
-    signatureMap[key] = value;
+    if (key && value) signatureMap[key] = value;
   });
-  
+
   const ts = signatureMap['ts'];
-  const v1 = signatureMap['v1'];
-  
-  if (!ts || !v1) return false;
-  
-  const signedPayload = `${ts}:${body}`;
+  const v1 = signatureMap['h1'];
+
+  if (!ts || !v1) {
+    console.error('Invalid signature format: missing ts or h1');
+    return false;
+  }
+
+  // Reject requests older than 5 minutes (replay protection)
+  const timestampAge = Math.abs(Date.now() / 1000 - parseInt(ts, 10));
+  if (timestampAge > 300) {
+    console.error('Webhook timestamp too old:', timestampAge, 'seconds');
+    return false;
+  }
+
+  const signedPayload = `${ts}:${rawBody}`;
   const hmac = crypto.createHmac('sha256', secret);
   hmac.update(signedPayload);
   const expectedSignature = hmac.digest('hex');
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(v1, 'hex'),
-    Buffer.from(expectedSignature, 'hex')
-  );
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(v1, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    );
+  } catch (err) {
+    console.error('Signature comparison error:', err.message);
+    return false;
+  }
+}
+
+// Read raw body stream from Vercel request
+async function getRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 export default async function handler(req, res) {
@@ -57,22 +106,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const rawBody = JSON.stringify(req.body);
+    const rawBody = await getRawBody(req);
     const signature = req.headers['paddle-signature'];
-    
-    // Verify webhook signature if secret is set
-    if (process.env.PADDLE_WEBHOOK_SECRET && signature) {
-      const isValid = verifyPaddleSignature(rawBody, signature, process.env.PADDLE_WEBHOOK_SECRET);
-      if (!isValid) {
-        console.error('Invalid Paddle signature');
-        return res.status(401).json({ error: 'Invalid signature' });
-      }
+
+    // MANDATORY signature verification
+    const isValid = verifyPaddleSignature(
+      rawBody,
+      signature,
+      process.env.PADDLE_WEBHOOK_SECRET
+    );
+
+    if (!isValid) {
+      console.error('Webhook signature verification failed');
+      return res.status(401).json({ error: 'Invalid signature' });
     }
 
-    const event = req.body;
-    
+    let event;
+    try {
+      event = JSON.parse(rawBody);
+    } catch (e) {
+      console.error('Failed to parse webhook JSON body:', e.message);
+      return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
+
     // Log event for debugging
-    console.log('Paddle webhook event:', event.event_type);
+    console.log('Paddle webhook event:', event.event_type, 'id:', event.event_id);
 
     // Handle transaction.completed event
     if (event.event_type === 'transaction.completed') {
@@ -80,46 +138,59 @@ export default async function handler(req, res) {
       const email = transaction.customer?.email || transaction.checkout?.email;
       const orderId = transaction.id;
       const productId = transaction.items?.[0]?.price?.product_id;
-      
-      if (!email) {
-        console.error('No email in transaction');
-        return res.status(400).json({ error: 'No email found' });
+
+      // Validate product ID
+      if (!ALLOWED_PRODUCT_IDS.includes(productId)) {
+        console.error('Unknown product ID:', productId);
+        return res.status(400).json({ error: 'Unknown product' });
       }
 
-      // Check if license already exists for this order
+      // Validate email
+      if (!email || !isValidEmail(email)) {
+        console.error('Invalid or missing email:', email);
+        return res.status(400).json({ error: 'Invalid email' });
+      }
+
+      // Validate order ID format
+      if (!orderId || typeof orderId !== 'string' || orderId.length < 5) {
+        console.error('Invalid order ID:', orderId);
+        return res.status(400).json({ error: 'Invalid order ID' });
+      }
+
+      // Check if license already exists for this order (idempotency)
       const { data: existingLicense } = await supabase
         .from('license_keys')
         .select('license_key')
         .eq('paddle_order_id', orderId)
-        .single();
+        .maybeSingle();
 
       if (existingLicense) {
         console.log('License already exists for order:', orderId);
-        return res.status(200).json({ 
-          success: true, 
-          license_key: existingLicense.license_key 
+        return res.status(200).json({
+          success: true,
+          license_key: existingLicense.license_key
         });
       }
 
-      // Generate unique license key
+      // Generate unique license key (cryptographically secure)
       let licenseKey;
       let isUnique = false;
       let attempts = 0;
-      
+
       while (!isUnique && attempts < 10) {
         licenseKey = generateLicenseKey();
         const { data } = await supabase
           .from('license_keys')
           .select('id')
           .eq('license_key', licenseKey)
-          .single();
-        
+          .maybeSingle();
+
         if (!data) isUnique = true;
         attempts++;
       }
 
       if (!isUnique) {
-        console.error('Failed to generate unique license key');
+        console.error('Failed to generate unique license key after', attempts, 'attempts');
         return res.status(500).json({ error: 'Failed to generate license key' });
       }
 
@@ -139,19 +210,15 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to save license' });
       }
 
-      console.log('License created:', licenseKey, 'for email:', email);
+      console.log('License created:', licenseKey, 'for email:', email, 'order:', orderId);
 
-      // TODO: Send email with license key
-      // For now, Paddle will send receipt email
-      // You can add Resend/SendGrid integration here
-
-      return res.status(200).json({ 
-        success: true, 
-        license_key: licenseKey 
+      return res.status(200).json({
+        success: true,
+        license_key: licenseKey
       });
     }
 
-    // Handle other events
+    // Handle other events (acknowledge receipt)
     return res.status(200).json({ success: true });
 
   } catch (error) {

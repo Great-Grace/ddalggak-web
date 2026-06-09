@@ -110,6 +110,7 @@ const TRANSLATIONS = {
     downloadAndroid: 'Download for Android',
     licenseActivated: 'License Activated!',
     licenseActivatedDesc: 'Thank you for your purchase. Download the app and enter your license key to start using DDalGGak.',
+    closeBtn: 'Close',
   },
   ko: {
     navDemo: '웹 데모',
@@ -195,6 +196,7 @@ const TRANSLATIONS = {
     downloadAndroid: 'Android 다운로드',
     licenseActivated: '라이선스 활성화 완료!',
     licenseActivatedDesc: '구매해 주셔서 감사합니다. 앱을 다운로드하고 라이선스 키를 입력하여 DDalGGak을 시작하세요.',
+    closeBtn: '닫기',
   }
 };
 
@@ -224,11 +226,13 @@ function LandingPage() {
       eventCallback: (event) => {
         if (event.name === 'checkout.completed') {
           const transactionId = event.data?.transaction_id || event.data?.transaction?.id;
-          if (transactionId) {
+          if (transactionId && /^txn_[a-zA-Z0-9]+$/.test(transactionId)) {
             window.location.href = `${window.location.origin}/?success=true&transaction_id=${transactionId}`;
           }
         }
       }
+    }).catch(err => {
+      console.error('Failed to initialize Paddle:', err);
     });
 
     // Check URL for success callback
@@ -237,10 +241,14 @@ function LandingPage() {
       const key = params.get('license_key');
       const transactionId = params.get('transaction_id');
 
-      if (key) {
-        setLicenseKey(key);
+      // Validate inputs from URL params before taking action (XSS & Injection protection)
+      const isKeyValid = key && /^DDGG-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(key.trim().toUpperCase());
+      const isTxIdValid = transactionId && /^txn_[a-zA-Z0-9]+$/.test(transactionId.trim());
+
+      if (isKeyValid) {
+        setLicenseKey(key.trim().toUpperCase());
         setShowSuccess(true);
-      } else if (transactionId) {
+      } else if (isTxIdValid) {
         setShowSuccess(true);
         setLicenseKey('Generating license key... Please wait.');
 
@@ -248,10 +256,16 @@ function LandingPage() {
         const interval = setInterval(async () => {
           attempts++;
           try {
+            if (!supabase) {
+              setLicenseKey('Database connection is not configured. Please contact support.');
+              clearInterval(interval);
+              return;
+            }
+
             const { data, error } = await supabase
               .from('license_keys')
               .select('license_key')
-              .eq('paddle_order_id', transactionId)
+              .eq('paddle_order_id', transactionId.trim())
               .maybeSingle();
 
             if (data && data.license_key) {
@@ -494,19 +508,24 @@ function LandingPage() {
 
         {/* Success Modal */}
         {showSuccess && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}>
+          <div 
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="success-modal-title"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }}
+          >
             <div style={{
               background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
               borderRadius: '24px',
@@ -516,8 +535,8 @@ function LandingPage() {
               border: '1px solid rgba(255,255,255,0.1)',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
-              <h2 style={{ color: '#fff', marginBottom: '8px' }}>{t.licenseActivated}</h2>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }} aria-hidden="true">🎉</div>
+              <h2 id="success-modal-title" style={{ color: '#fff', marginBottom: '8px' }}>{t.licenseActivated}</h2>
               <p style={{ color: 'var(--color-secondary)', marginBottom: '24px' }}>{t.licenseActivatedDesc}</p>
 
               <div style={{
@@ -564,7 +583,11 @@ function LandingPage() {
               </div>
 
               <button
-                onClick={() => setShowSuccess(false)}
+                onClick={() => {
+                  setShowSuccess(false);
+                  // Clean up URL parameters so refresh doesn't trigger modal again
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                }}
                 style={{
                   marginTop: '20px',
                   background: 'none',
@@ -574,7 +597,7 @@ function LandingPage() {
                   fontSize: '14px'
                 }}
               >
-                Close
+                {t.closeBtn}
               </button>
             </div>
           </div>

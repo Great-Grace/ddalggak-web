@@ -209,6 +209,17 @@ main {
   box-shadow: 0 0 28px rgba(255, 210, 84, 0.25);
 }
 
+.android-btn {
+  background-color: #3DDC84; /* Android Brand Green */
+  color: #000 !important;
+  box-shadow: 0 0 20px rgba(61, 220, 132, 0.2);
+}
+
+.android-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 28px rgba(61, 220, 132, 0.35);
+}
+
 /* Hero Section */
 .hero {
   display: grid;
