@@ -3,8 +3,9 @@ import { Routes, Route, Link } from 'react-router-dom';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import RefundPolicy from './pages/RefundPolicy';
+import { initializePaddle, openCheckout } from './paddle';
+import { supabase } from './supabase';
 
-const SWITCHES = ['blue', 'brown', 'red', 'thock'];
 
 const KEY_MAP = {
   'q': 'key-q', 'w': 'key-w', 'e': 'key-e', 'r': 'key-r', 't': 'key-t',
@@ -15,6 +16,8 @@ const KEY_MAP = {
   'n': 'key-n', 'm': 'key-m',
   ' ': 'key-space'
 };
+
+const SWITCHES = ['blue', 'brown', 'red', 'thock'];
 
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -32,7 +35,7 @@ const TRANSLATIONS = {
     heroTitle: 'Make Your Typing',
     heroSubtitleColor: 'Satisfying & Addictive',
     heroDesc: 'Listen to crisp mechanical keyboard sounds in real-time as you type. Features a native 100% local audio renderer for instantaneous feedback. Fully compatible with custom soundpacks!',
-    btnBuy: 'Get Lifetime Access - $1 💎',
+    btnBuy: 'Get Lifetime Access - $2 💎',
     mockupListening: 'Listening',
     mockupBlueName: 'Blue Clicky',
     mockupBlueDesc: 'Crisp, tactile, buckling spring clicks',
@@ -65,11 +68,11 @@ const TRANSLATIONS = {
     tabMac: '🍎 macOS Guide',
     tabAndroid: '🤖 Android Guide',
     macStep1Title: 'Get License & Extract Package',
-    macStep1Desc: 'After acquiring your license on Buy Me a Coffee, download the DDalGGak.zip package, unzip it, and move DDalGGak.app into your Applications folder.',
+    macStep1Desc: 'After acquiring your license, download the DDalGGak.zip package, unzip it, and move DDalGGak.app into your Applications folder.',
     macStep2Title: 'Resolve Developer Signature Warning (Gatekeeper)',
     macStep2Desc: 'Because the binary is self-signed, macOS might display an "unidentified developer" warning. Solve this in seconds:',
     macStep2MethodATitle: 'Method A: Right-Click & Open (Recommended)',
-    macStep2MethodADesc: 'Instead of double-clicking the app, Right-Click &rarr; Open. A dialogue will appear with an [Open] button. Click it to register the app in your security whitelist permanently.',
+    macStep2MethodADesc: 'Instead of double-clicking the app, Right-Click → Open. A dialogue will appear with an [Open] button. Click it to register the app in your security whitelist permanently.',
     macStep2MethodBTitle: 'Method B: Bypass via Terminal Command',
     macStep2MethodBDesc: 'Open Terminal and run the following command to strip the quarantine flag:',
     macStep2MethodBNote: '* Note: If you downloaded it multiple times, ensure the name matches (e.g. "/Applications/DDalGGak 2.app").',
@@ -78,10 +81,10 @@ const TRANSLATIONS = {
     macStep3Accessibility: 'Accessibility: System Settings -> Privacy & Security -> Accessibility -> Enable DDalGGak',
     macStep3Input: 'Input Monitoring: System Settings -> Privacy & Security -> Input Monitoring -> Enable DDalGGak',
     androidStep1Title: 'Download Android APK',
-    androidStep1Desc: 'Purchase your license on Buy Me a Coffee, download the ddalggak.apk installer package, and run it on your mobile device.',
+    androidStep1Desc: 'Purchase your license, download the ddalggak.apk installer package, and run it on your mobile device.',
     androidStep2Title: 'Bypass Play Protect & Install Anyway',
     androidStep2Desc: 'Since this app is distributed directly outside Google Play Store, Play Protect might prompt warning dialogues:',
-    androidStep2PlayProtect: 'Play Protect Banner: Tap "More details" &rarr; "Install anyway" to bypass.',
+    androidStep2PlayProtect: 'Play Protect Banner: Tap "More details" → "Install anyway" to bypass.',
     androidStep2Source: 'Source Authorization: If prompted by your browser or file manager, toggle "Allow installs from this source".',
     androidStep3Title: 'Enable DDalGGak Accessibility Service',
     androidStep3Desc: 'Open the app, tap the status banner at the top to navigate to system settings, and enable the service:',
@@ -89,18 +92,24 @@ const TRANSLATIONS = {
     androidStep3Select: 'Select DDalGGak (Mechanical Keyboard Sound).',
     androidStep3Toggle: 'Toggle the switch to [ON]. Enjoy typing anywhere!',
     pricingBadge: 'Indie Pricing',
-    pricingTitle: 'Exactly $1. Lifetime Access.',
-    pricingDesc: 'No subscriptions. No tracking. Support the project for just one dollar and unlock pre-built native binaries, lifetime updates, and custom soundpacks.',
+    pricingTitle: 'Exactly $2. Lifetime Access.',
+    pricingDesc: 'No subscriptions. No tracking. Support the project for just two dollars and unlock pre-built native binaries, lifetime updates, and custom soundpacks.',
     pricingSub: 'One-time payment • Lifetime upgrades',
-    btnBuyLarge: 'Buy Lifetime License ☕',
+    btnBuyLarge: 'Buy Lifetime License 🔑',
     ctaTitle: 'Enjoying the Mechanical Sounds?',
-    ctaDesc: 'DDalGGak is fully open source. Give us a Star on GitHub or buy a coffee to help us add more premium switch sounds!',
+    ctaDesc: 'DDalGGak is fully open source. Give us a Star on GitHub or buy a license to help us add more premium switch sounds!',
     btnStar: 'Star on GitHub ⭐',
-    btnSupport: 'Support the Developer ☕',
+    btnSupport: 'Support the Developer 🔑',
     footerRelease: '© 2026 DDalGGak Project. Released under CC0 & MIT License. 100% Local Utility.',
     footerSub: 'Designed with premium glassmorphism. For personal testing and evaluation.',
     copyBtn: 'Copy',
-    copiedBtn: 'Copied!'
+    copiedBtn: 'Copied!',
+    licenseKeyTitle: 'Your License Key',
+    licenseKeyDesc: 'Save this key! You will need it to activate DDalGGak.',
+    downloadMac: 'Download for macOS',
+    downloadAndroid: 'Download for Android',
+    licenseActivated: 'License Activated!',
+    licenseActivatedDesc: 'Thank you for your purchase. Download the app and enter your license key to start using DDalGGak.',
   },
   ko: {
     navDemo: '웹 데모',
@@ -111,7 +120,7 @@ const TRANSLATIONS = {
     heroTitle: '타이핑을 더',
     heroSubtitleColor: '즐겁고 찰지게',
     heroDesc: '키보드를 누를 때마다 찰진 기계식 타건음을 실시간으로 들려주는 초저지연 오디오 에뮬레이터입니다. 기기 내 로컬 렌더러로 반응 속도가 손가락 끝과 일치하며, 사용자 커스텀 사운드팩을 완벽하게 지원합니다.',
-    btnBuy: '평생 라이선스 구매 - $1 💎',
+    btnBuy: '평생 라이선스 구매 - $2 💎',
     mockupListening: '작동 중',
     mockupBlueName: '청축 (Blue)',
     mockupBlueDesc: '찰진 구분감과 경쾌한 클릭 타건음',
@@ -144,7 +153,7 @@ const TRANSLATIONS = {
     tabMac: '🍎 macOS 가이드',
     tabAndroid: '🤖 Android 가이드',
     macStep1Title: '라이선스 획득 및 압축 해제',
-    macStep1Desc: 'Buy Me a Coffee에서 라이선스를 구매한 후 다운로드한 DDalGGak.zip 패키지의 압축을 풀고, DDalGGak.app 파일을 응용 프로그램(Applications) 폴더로 이동합니다.',
+    macStep1Desc: '라이선스를 구매한 후 다운로드한 DDalGGak.zip 패키지의 압축을 풀고, DDalGGak.app 파일을 응용 프로그램(Applications) 폴더로 이동합니다.',
     macStep2Title: '보안 경고 (Gatekeeper) 및 차단 해결',
     macStep2Desc: '개발자 서명이 적용되지 않은 테스트 빌드이므로 경고가 뜰 수 있습니다. 아래 방법 중 하나로 해결 가능합니다.',
     macStep2MethodATitle: '방법 A: 마우스 우클릭으로 열기 (권장)',
@@ -157,7 +166,7 @@ const TRANSLATIONS = {
     macStep3Accessibility: '손쉬운 사용: 시스템 설정 -> 개인정보 보호 및 보안 -> 손쉬운 사용 -> 딸깍(DDalGGak) 허용',
     macStep3Input: '입력 모니터링: 시스템 설정 -> 개인정보 보호 및 보안 -> 입력 모니터링 -> 딸깍(DDalGGak) 허용',
     androidStep1Title: '안드로이드 설치 APK 준비',
-    androidStep1Desc: 'Buy Me a Coffee에서 라이선스를 구매한 후 다운로드한 ddalggak.apk 설치 파일을 실행합니다.',
+    androidStep1Desc: '라이선스를 구매한 후 다운로드한 ddalggak.apk 설치 파일을 실행합니다.',
     androidStep2Title: '출처가 불분명한 앱 설치 허용',
     androidStep2Desc: '구글 플레이스토어 외부 설치이므로 경고 창이 뜰 수 있습니다. 절차에 따라 허용해 줍니다.',
     androidStep2PlayProtect: '보안 차단 발생 시: 안내 팝업창에서 "무시하고 설치"를 선택하여 진행합니다.',
@@ -168,18 +177,24 @@ const TRANSLATIONS = {
     androidStep3Select: '목록에서 딸깍 (기계식 키보드 소리) 서비스를 선택합니다.',
     androidStep3Toggle: '서비스 사용 스위치를 [사용함(ON)]으로 켜 줍니다. 이제 어디서나 타건음을 즐기세요!',
     pricingBadge: '인디 가격',
-    pricingTitle: '단돈 1달러. 영구 사용 라이선스.',
-    pricingDesc: '구독료나 내부 트래커가 없습니다. 1달러의 후원으로 빌드된 네이티브 바이너리 영구 업그레이드와 커스텀 사운드팩 기능을 잠금 해제하세요.',
+    pricingTitle: '단돈 2달러. 영구 사용 라이선스.',
+    pricingDesc: '구독료나 내부 트래커가 없습니다. 2달러의 후원으로 빌드된 네이티브 바이너리 영구 업그레이드와 커스텀 사운드팩 기능을 잠금 해제하세요.',
     pricingSub: '일시불 결제 • 평생 업그레이드 제공',
-    btnBuyLarge: '라이선스 구매하기 ☕',
+    btnBuyLarge: '라이선스 구매하기 🔑',
     ctaTitle: '타건음이 마음에 드셨나요?',
-    ctaDesc: '딸깍은 완전히 공개된 오픈소스 프로젝트입니다. 깃허브 스타를 주거나 개발자에게 커피 한 잔을 후원하여 개발을 응원해 주세요!',
+    ctaDesc: '딸깍은 완전히 공개된 오픈소스 프로젝트입니다. 깃허브 스타를 주거나 라이선스를 구매하여 개발을 응원해 주세요!',
     btnStar: 'GitHub 스타 주기 ⭐',
-    btnSupport: '개발자 후원하기 ☕',
+    btnSupport: '개발자 후원하기 🔑',
     footerRelease: '© 2026 딸깍 프로젝트. CC0 & MIT 라이선스 제공. 100% 로컬 유틸리티.',
     footerSub: '고급 글래스모피즘 디자인 적용. 개인 테스트 및 검증용 빌드.',
     copyBtn: '복사',
-    copiedBtn: '복사 완료!'
+    copiedBtn: '복사 완료!',
+    licenseKeyTitle: '라이선스 키',
+    licenseKeyDesc: '이 키를 저장하세요! DDalGGak 활성화에 필요합니다.',
+    downloadMac: 'macOS 다운로드',
+    downloadAndroid: 'Android 다운로드',
+    licenseActivated: '라이선스 활성화 완료!',
+    licenseActivatedDesc: '구매해 주셔서 감사합니다. 앱을 다운로드하고 라이선스 키를 입력하여 DDalGGak을 시작하세요.',
   }
 };
 
@@ -189,6 +204,8 @@ function LandingPage() {
   const [activeKeys, setActiveKeys] = useState({});
   const [copyStatus, setCopyStatus] = useState({});
   const [activeInstallTab, setActiveInstallTab] = useState('macos');
+  const [licenseKey, setLicenseKey] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const t = TRANSLATIONS[lang];
 
@@ -201,10 +218,65 @@ function LandingPage() {
     thock: 0
   });
 
+  // Initialize Paddle on mount
+  useEffect(() => {
+    initializePaddle({
+      eventCallback: (event) => {
+        if (event.name === 'checkout.completed') {
+          const transactionId = event.data?.transaction_id || event.data?.transaction?.id;
+          if (transactionId) {
+            window.location.href = `${window.location.origin}/?success=true&transaction_id=${transactionId}`;
+          }
+        }
+      }
+    });
+
+    // Check URL for success callback
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      const key = params.get('license_key');
+      const transactionId = params.get('transaction_id');
+
+      if (key) {
+        setLicenseKey(key);
+        setShowSuccess(true);
+      } else if (transactionId) {
+        setShowSuccess(true);
+        setLicenseKey('Generating license key... Please wait.');
+
+        let attempts = 0;
+        const interval = setInterval(async () => {
+          attempts++;
+          try {
+            const { data, error } = await supabase
+              .from('license_keys')
+              .select('license_key')
+              .eq('paddle_order_id', transactionId)
+              .maybeSingle();
+
+            if (data && data.license_key) {
+              setLicenseKey(data.license_key);
+              clearInterval(interval);
+            } else if (attempts >= 15) {
+              setLicenseKey('License key has been generated, but we took too long to fetch it. Please check your email or contact support.');
+              clearInterval(interval);
+            }
+          } catch (err) {
+            console.error('Error fetching license key:', err);
+            if (attempts >= 15) {
+              setLicenseKey('Failed to load license key. Please check your email or contact support.');
+              clearInterval(interval);
+            }
+          }
+        }, 2000);
+
+        return () => clearInterval(interval);
+      }
+    }
+  }, []);
+
   // Preload audio files on mount
   useEffect(() => {
-    document.body.className = `theme-${activeSwitch}`;
-
     // Initialize audio pool (12 channels per switch)
     SWITCHES.forEach(sw => {
       audioPool.current[sw] = [];
@@ -228,7 +300,7 @@ function LandingPage() {
   // Trigger switch sound
   const playSound = (switchType) => {
     const pool = audioPool.current[switchType];
-    if (!pool) return;
+    if (!pool || pool.length === 0) return;
 
     const cursor = poolCursors.current[switchType];
     const audio = pool[cursor];
@@ -309,6 +381,11 @@ function LandingPage() {
     });
   };
 
+  // Open Paddle Checkout
+  const handleBuyClick = () => {
+    openCheckout();
+  };
+
   const codeQuarantineText = `xattr -cr /Applications/DDalGGak.app`;
 
   return (
@@ -324,10 +401,10 @@ function LandingPage() {
             <a href="#features">{t.navFeatures}</a>
             <a href="#install">{t.navInstall}</a>
             <a href="#pricing">{t.navPricing}</a>
-            
+
             {/* Language Selector Toggle */}
-            <button 
-              className="lang-toggle-btn" 
+            <button
+              className="lang-toggle-btn"
               onClick={() => setLang(lang === 'en' ? 'ko' : 'en')}
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
@@ -364,9 +441,12 @@ function LandingPage() {
             <h1>{t.heroTitle}<br /><span className="gradient-text">{t.heroSubtitleColor}</span></h1>
             <p className="hero-subtitle">{t.heroDesc}</p>
             <div className="hero-actions">
-              <a href="https://buymeacoffee.com/ddalggak" target="_blank" rel="noopener noreferrer" className="btn primary-btn" style={{ padding: '16px 32px' }}>
+              <button
+                onClick={handleBuyClick}
+                className="btn primary-btn"
+              >
                 <span>{t.btnBuy}</span>
-              </a>
+              </button>
             </div>
           </div>
           <div className="hero-visual">
@@ -412,6 +492,94 @@ function LandingPage() {
           </div>
         </section>
 
+        {/* Success Modal */}
+        {showSuccess && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              borderRadius: '24px',
+              padding: '40px',
+              maxWidth: '500px',
+              width: '100%',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
+              <h2 style={{ color: '#fff', marginBottom: '8px' }}>{t.licenseActivated}</h2>
+              <p style={{ color: 'var(--color-secondary)', marginBottom: '24px' }}>{t.licenseActivatedDesc}</p>
+
+              <div style={{
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ color: 'var(--color-tertiary)', fontSize: '12px', marginBottom: '8px' }}>{t.licenseKeyTitle}</div>
+                <div style={{
+                  fontFamily: 'monospace',
+                  fontSize: '18px',
+                  color: '#5c6bf2',
+                  wordBreak: 'break-all',
+                  padding: '12px',
+                  background: 'rgba(92, 107, 242, 0.1)',
+                  borderRadius: '8px'
+                }}>
+                  {licenseKey}
+                </div>
+                <button
+                  onClick={() => handleCopyToClipboard(licenseKey, 'license')}
+                  style={{
+                    marginTop: '12px',
+                    background: 'rgba(92, 107, 242, 0.2)',
+                    border: '1px solid rgba(92, 107, 242, 0.3)',
+                    color: '#5c6bf2',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {copyStatus['license'] ? t.copiedBtn : t.copyBtn}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <a href="/DDalGGak.zip" download className="btn primary-btn" style={{ padding: '12px 24px' }}>
+                  {t.downloadMac}
+                </a>
+                <a href="/ddalggak.apk" download className="btn primary-btn" style={{ padding: '12px 24px', background: '#4CAF50' }}>
+                  {t.downloadAndroid}
+                </a>
+              </div>
+
+              <button
+                onClick={() => setShowSuccess(false)}
+                style={{
+                  marginTop: '20px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-tertiary)',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Interactive Playground */}
         <section id="demo" className="playground-section">
           <div className="section-header">
@@ -437,7 +605,7 @@ function LandingPage() {
                 {t.demoThock}
               </button>
             </div>
-            
+
             <div className="keyboard-preview">
               {KEYBOARD_ROWS.map((row, rIdx) => (
                 <div key={rIdx} className="keyboard-row">
@@ -510,20 +678,20 @@ function LandingPage() {
           </div>
 
           <div className="install-tabs" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '32px' }}>
-            <button 
+            <button
               className={`switch-tab ${activeInstallTab === 'macos' ? 'active' : ''}`}
               onClick={() => setActiveInstallTab('macos')}
             >
               {t.tabMac}
             </button>
-            <button 
+            <button
               className={`switch-tab ${activeInstallTab === 'android' ? 'active' : ''}`}
               onClick={() => setActiveInstallTab('android')}
             >
               {t.tabAndroid}
             </button>
           </div>
-          
+
           <div className="install-container">
             {activeInstallTab === 'macos' ? (
               <>
@@ -540,7 +708,7 @@ function LandingPage() {
                   <div className="step-content">
                     <h3>{t.macStep2Title}</h3>
                     <p>{t.macStep2Desc}</p>
-                    
+
                     <div style={{ padding: '14px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '16px' }}>
                       <strong style={{ color: 'var(--accent-active)', display: 'block', marginBottom: '6px' }}>{t.macStep2MethodATitle}</strong>
                       <span style={{ fontSize: '13px', color: 'var(--color-secondary)', lineHeight: '1.5', display: 'block' }}>
@@ -555,7 +723,7 @@ function LandingPage() {
                       </span>
                       <div className="code-box" style={{ marginBottom: '8px' }}>
                         <pre><code>{codeQuarantineText}</code></pre>
-                        <button 
+                        <button
                           className={`copy-btn ${copyStatus['quarantine'] ? 'copied' : ''}`}
                           onClick={() => handleCopyToClipboard(codeQuarantineText, 'quarantine')}
                         >
@@ -632,11 +800,14 @@ function LandingPage() {
             <p style={{ maxWidth: '600px', margin: '12px auto 0', color: 'var(--color-secondary)' }}>{t.pricingDesc}</p>
           </div>
           <div style={{ display: 'inline-block', padding: '32px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '20px', border: '1px solid var(--color-border)' }}>
-            <div style={{ fontSize: '48px', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>$1.00</div>
+            <div style={{ fontSize: '48px', fontWeight: '900', color: '#fff', marginBottom: '8px' }}>$2.00</div>
             <div style={{ color: 'var(--color-tertiary)', fontSize: '14px', marginBottom: '24px' }}>{t.pricingSub}</div>
-            <a href="https://buymeacoffee.com/ddalggak" target="_blank" rel="noopener noreferrer" className="btn coffee-btn" style={{ background: '#5c6bf2', color: '#fff', padding: '14px 40px', fontSize: '16px', fontWeight: 'bold', borderRadius: '12px', border: 'none', cursor: 'pointer', transition: 'all 0.2s', display: 'inline-block' }}>
+            <button
+              onClick={handleBuyClick}
+              className="btn coffee-btn"
+            >
               {t.btnBuyLarge}
-            </a>
+            </button>
           </div>
         </section>
 
@@ -648,9 +819,9 @@ function LandingPage() {
             <a href="https://github.com/Great-Grace/DDalGGak" target="_blank" rel="noopener noreferrer" className="btn primary-btn">
               <span>{t.btnStar}</span>
             </a>
-            <a href="https://buymeacoffee.com/ddalggak" target="_blank" rel="noopener noreferrer" className="btn coffee-btn">
+            <button onClick={handleBuyClick} className="btn coffee-btn">
               <span>{t.btnSupport}</span>
-            </a>
+            </button>
           </div>
         </section>
       </main>
