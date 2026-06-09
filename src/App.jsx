@@ -66,7 +66,7 @@ const TRANSLATIONS = {
     installTitle: 'Installation & Permission Guide',
     installDesc: 'Follow these straightforward steps to bypass OS security blocks and grant required accessibility permissions.',
     tabMac: '🍎 macOS Guide',
-    tabAndroid: '🤖 Android Guide',
+    tabWindows: '💻 Windows Guide',
     macStep1Title: 'Get License & Extract Package',
     macStep1Desc: 'After acquiring your license, download the DDalGGak.zip package, unzip it, and move DDalGGak.app into your Applications folder.',
     macStep2Title: 'Resolve Developer Signature Warning (Gatekeeper)',
@@ -80,17 +80,14 @@ const TRANSLATIONS = {
     macStep3Desc: 'To detect system-wide key presses and play sounds, enable accessibility permissions (fully localized, secure, and private):',
     macStep3Accessibility: 'Accessibility: System Settings -> Privacy & Security -> Accessibility -> Enable DDalGGak',
     macStep3Input: 'Input Monitoring: System Settings -> Privacy & Security -> Input Monitoring -> Enable DDalGGak',
-    androidStep1Title: 'Download Android APK',
-    androidStep1Desc: 'Purchase your license, download the ddalggak.apk installer package, and run it on your mobile device.',
-    androidStep2Title: 'Bypass Play Protect & Install Anyway',
-    androidStep2Desc: 'Since this app is distributed directly outside Google Play Store, Play Protect might prompt warning dialogues:',
-    androidStep2PlayProtect: 'Play Protect Banner: Tap "More details" → "Install anyway" to bypass.',
-    androidStep2Source: 'Source Authorization: If prompted by your browser or file manager, toggle "Allow installs from this source".',
-    androidStep3Title: 'Enable DDalGGak Accessibility Service',
-    androidStep3Desc: 'Open the app, tap the status banner at the top to navigate to system settings, and enable the service:',
-    androidStep3Install: 'Navigate to Installed Apps or Downloaded Services.',
-    androidStep3Select: 'Select DDalGGak (Mechanical Keyboard Sound).',
-    androidStep3Toggle: 'Toggle the switch to [ON]. Enjoy typing anywhere!',
+    winStep1Title: 'Download & Extract Windows Package',
+    winStep1Desc: 'After purchasing your license, download the ddalggak-windows.zip package and extract it to a folder of your choice.',
+    winStep2Title: 'Bypass Windows SmartScreen Warning',
+    winStep2Desc: 'Because the executable is self-signed, Windows Defender SmartScreen might block the launch:',
+    winStep2SmartScreen: 'SmartScreen Banner: Click "More info" then click "Run anyway" to proceed.',
+    winStep2Defender: 'Antivirus: If flagged by Windows Defender, add the folder to your antivirus whitelist.',
+    winStep3Title: 'Run & Enjoy Typing',
+    winStep3Desc: 'Simply double-click DDalGGak.exe. Unlike macOS, Windows does not require special system permission configurations for keyboard hooks.',
     pricingBadge: 'Indie Pricing',
     pricingTitle: 'Exactly $2. Lifetime Access.',
     pricingDesc: 'No subscriptions. No tracking. Support the project for just two dollars and unlock pre-built native binaries, lifetime updates, and custom soundpacks.',
@@ -107,7 +104,7 @@ const TRANSLATIONS = {
     licenseKeyTitle: 'Your License Key',
     licenseKeyDesc: 'Save this key! You will need it to activate DDalGGak.',
     downloadMac: 'Download for macOS',
-    downloadAndroid: 'Download for Android',
+    downloadWindows: 'Download for Windows',
     licenseActivated: 'License Activated!',
     licenseActivatedDesc: 'Thank you for your purchase. Download the app and enter your license key to start using DDalGGak.',
     closeBtn: 'Close',
@@ -152,7 +149,7 @@ const TRANSLATIONS = {
     installTitle: '설치 및 권한 설정 가이드',
     installDesc: '플랫폼별 보안 경고 해결 및 권한 허용 절차를 따라 안전하게 온보딩을 완료해 보세요.',
     tabMac: '🍎 macOS 가이드',
-    tabAndroid: '🤖 Android 가이드',
+    tabWindows: '💻 Windows 가이드',
     macStep1Title: '라이선스 획득 및 압축 해제',
     macStep1Desc: '라이선스를 구매한 후 다운로드한 DDalGGak.zip 패키지의 압축을 풀고, DDalGGak.app 파일을 응용 프로그램(Applications) 폴더로 이동합니다.',
     macStep2Title: '보안 경고 (Gatekeeper) 및 차단 해결',
@@ -166,17 +163,14 @@ const TRANSLATIONS = {
     macStep3Desc: '어느 앱에서 타이핑하든 키 소리를 실시간으로 재생하려면 아래 권한들을 허용해 주어야 합니다.',
     macStep3Accessibility: '손쉬운 사용: 시스템 설정 -> 개인정보 보호 및 보안 -> 손쉬운 사용 -> 딸깍(DDalGGak) 허용',
     macStep3Input: '입력 모니터링: 시스템 설정 -> 개인정보 보호 및 보안 -> 입력 모니터링 -> 딸깍(DDalGGak) 허용',
-    androidStep1Title: '안드로이드 설치 APK 준비',
-    androidStep1Desc: '라이선스를 구매한 후 다운로드한 ddalggak.apk 설치 파일을 실행합니다.',
-    androidStep2Title: '출처가 불분명한 앱 설치 허용',
-    androidStep2Desc: '구글 플레이스토어 외부 설치이므로 경고 창이 뜰 수 있습니다. 절차에 따라 허용해 줍니다.',
-    androidStep2PlayProtect: '보안 차단 발생 시: 안내 팝업창에서 "무시하고 설치"를 선택하여 진행합니다.',
-    androidStep2Source: '설치 권한 팝업 시: 파일 관리자나 브라우저 앱에 대해 "이 출처의 앱 설치 허용"을 켜줍니다.',
-    androidStep3Title: '접근성 서비스에서 권한 활성화',
-    androidStep3Desc: '설치된 딸깍 앱을 실행하고 화면 상단의 접근성 설정 켜기를 누르면 시스템 설정으로 바로 이동합니다.',
-    androidStep3Install: '설정의 설치된 앱 또는 다운로드된 서비스 카테고리로 들어갑니다.',
-    androidStep3Select: '목록에서 딸깍 (기계식 키보드 소리) 서비스를 선택합니다.',
-    androidStep3Toggle: '서비스 사용 스위치를 [사용함(ON)]으로 켜 줍니다. 이제 어디서나 타건음을 즐기세요!',
+    winStep1Title: 'Windows 패키지 다운로드 및 압축 해제',
+    winStep1Desc: '라이선스를 구매한 후 윈도우용 ddalggak-windows.zip 파일을 다운로드하고 원하는 폴더에 압축을 풉니다.',
+    winStep2Title: 'Windows Defender SmartScreen 경고 해결',
+    winStep2Desc: '자가 서명(Self-signed)된 실행 파일이므로 윈도우 보안 스마트스크린 경고가 표시될 수 있습니다.',
+    winStep2SmartScreen: '보안 경고창: "추가 정보"를 클릭한 뒤 "실행" 버튼을 눌러 경고를 우회합니다.',
+    winStep2Defender: '백신 오탐지: Windows Defender 등에서 경고할 경우, 파일 검사 예외 디렉터리로 등록합니다.',
+    winStep3Title: '실행 및 타건음 즐기기',
+    winStep3Desc: '압축 푼 폴더에서 DDalGGak.exe 파일을 더블 클릭하여 실행합니다. 윈도우는 macOS와 달리 별도의 손쉬운 사용 권한을 수동으로 설정할 필요가 없어 실행 즉시 적용됩니다.',
     pricingBadge: '인디 가격',
     pricingTitle: '단돈 2달러. 영구 사용 라이선스.',
     pricingDesc: '구독료나 내부 트래커가 없습니다. 2달러의 후원으로 빌드된 네이티브 바이너리 영구 업그레이드와 커스텀 사운드팩 기능을 잠금 해제하세요.',
@@ -193,7 +187,7 @@ const TRANSLATIONS = {
     licenseKeyTitle: '라이선스 키',
     licenseKeyDesc: '이 키를 저장하세요! DDalGGak 활성화에 필요합니다.',
     downloadMac: 'macOS 다운로드',
-    downloadAndroid: 'Android 다운로드',
+    downloadWindows: 'Windows 다운로드',
     licenseActivated: '라이선스 활성화 완료!',
     licenseActivatedDesc: '구매해 주셔서 감사합니다. 앱을 다운로드하고 라이선스 키를 입력하여 DDalGGak을 시작하세요.',
     closeBtn: '닫기',
@@ -577,8 +571,8 @@ function LandingPage() {
                 <a href="/DDalGGak.zip" download className="btn primary-btn" style={{ padding: '12px 24px' }}>
                   {t.downloadMac}
                 </a>
-                <a href="/ddalggak.apk" download className="btn primary-btn" style={{ padding: '12px 24px', background: '#4CAF50' }}>
-                  {t.downloadAndroid}
+                <a href="/ddalggak-windows.zip" download className="btn primary-btn" style={{ padding: '12px 24px', background: '#4CAF50' }}>
+                  {t.downloadWindows}
                 </a>
               </div>
 
@@ -708,10 +702,10 @@ function LandingPage() {
               {t.tabMac}
             </button>
             <button
-              className={`switch-tab ${activeInstallTab === 'android' ? 'active' : ''}`}
-              onClick={() => setActiveInstallTab('android')}
+              className={`switch-tab ${activeInstallTab === 'windows' ? 'active' : ''}`}
+              onClick={() => setActiveInstallTab('windows')}
             >
-              {t.tabAndroid}
+              {t.tabWindows}
             </button>
           </div>
 
@@ -781,19 +775,19 @@ function LandingPage() {
                 <div className="step-card">
                   <div className="step-num">1</div>
                   <div className="step-content">
-                    <h3>{t.androidStep1Title}</h3>
-                    <p>{t.androidStep1Desc}</p>
+                    <h3>{t.winStep1Title}</h3>
+                    <p>{t.winStep1Desc}</p>
                   </div>
                 </div>
 
                 <div className="step-card">
                   <div className="step-num">2</div>
                   <div className="step-content">
-                    <h3>{t.androidStep2Title}</h3>
-                    <p>{t.androidStep2Desc}</p>
+                    <h3>{t.winStep2Title}</h3>
+                    <p>{t.winStep2Desc}</p>
                     <ul className="permission-list" style={{ gap: '8px' }}>
-                      <li><strong>{t.androidStep2PlayProtect}</strong></li>
-                      <li><strong>{t.androidStep2Source}</strong></li>
+                      <li><strong>{t.winStep2SmartScreen}</strong></li>
+                      <li><strong>{t.winStep2Defender}</strong></li>
                     </ul>
                   </div>
                 </div>
@@ -801,13 +795,8 @@ function LandingPage() {
                 <div className="step-card">
                   <div className="step-num">3</div>
                   <div className="step-content">
-                    <h3>{t.androidStep3Title}</h3>
-                    <p>{t.androidStep3Desc}</p>
-                    <ul className="permission-list" style={{ gap: '8px' }}>
-                      <li>{t.androidStep3Install}</li>
-                      <li>{t.androidStep3Select}</li>
-                      <li>{t.androidStep3Toggle}</li>
-                    </ul>
+                    <h3>{t.winStep3Title}</h3>
+                    <p>{t.winStep3Desc}</p>
                   </div>
                 </div>
               </>
